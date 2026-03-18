@@ -1,0 +1,51 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+        
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      
+    - name: Install NDK and CMake
+      run: |
+        sdkmanager "ndk;25.1.8937393"
+        sdkmanager "cmake;3.22.1"
+        sdkmanager "build-tools;34.0.0"
+        sdkmanager "platforms;android-34"
+      
+    - name: Create local.properties
+      run: |
+        echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+        echo "ndk.dir=$ANDROID_SDK_ROOT/ndk/25.1.8937393" >> local.properties
+      
+    - name: Build with Gradle
+      run: |
+        chmod +x ./gradlew
+        ./gradlew assembleDebug --stacktrace
+      env:
+        ANDROID_NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/25.1.8937393
+      
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: EchoMonitor-Debug
+        path: app/build/outputs/apk/debug/app-debug.apk

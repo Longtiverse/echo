@@ -1,0 +1,153 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.echo'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.echo"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++17 -O3"
+                arguments "-DANDROID_STL=c++_shared"
+            }
+        }
+        
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64'
+        }
+    }
+
+    buildFeatures {
+        prefab true
+        viewBinding true
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+            version "3.22.1"
+        }
+    }
+
+    packagingOptions {
+        pickFirst 'lib/arm64-v8a/libc++_shared.so'
+        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
+        pickFirst 'lib/x86_64/libc++_shared.so'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            debuggable true
+            jniDebuggable true
+        }
+    }
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+// 自动归档任务 - 每次构建APK后自动归档并更新latest
+android.applicationVariants.all { variant ->
+    // 统一输出文件名
+    variant.outputs.all { output ->
+        if (variant.buildType.name == "debug") {
+            output.outputFileName = "app-debug.apk"
+        } else if (variant.buildType.name == "release") {
+            output.outputFileName = "app-release.apk"
+        }
+    }
+    
+    def buildType = variant.buildType.name.capitalize()
+    def sourceApk = variant.outputs[0].outputFile
+    def timestamp = new Date().format("yyyyMMdd_HHmmss")
+    
+    // 1. 创建归档任务（保留历史版本）
+    def archiveTask = task("archiveApk_${variant.name}", type: Copy) {
+        description = "Archive ${variant.buildType.name} APK with timestamp"
+        group = "Archive"
+        
+        def archiveDir = file("${project.buildDir}/outputs/apk/archive")
+        
+        from(sourceApk)
+        into(archiveDir)
+        rename { "Echo_${buildType}_${timestamp}.apk" }
+        
+        doFirst {
+            println "📦 Archiving APK: Echo_${buildType}_${timestamp}.apk"
+            archiveDir.mkdirs()
+        }
+        
+        doLast {
+            println "✅ Archived to: ${archiveDir}/Echo_${buildType}_${timestamp}.apk"
+        }
+    }
+    
+    // 2. 创建更新latest任务（只保留最新版本）
+    def updateLatestTask = task("updateLatestApk_${variant.name}", type: Copy) {
+        description = "Update latest ${variant.buildType.name} APK (only keep latest)"
+        group = "Archive"
+        
+        def latestDir = file("${project.buildDir}/outputs/apk/latest")
+        def latestApkName = "Echo_${buildType}_latest.apk"
+        
+        from(sourceApk)
+        into(latestDir)
+        rename { latestApkName }
+        
+        doFirst {
+            println "🔄 Updating latest APK: ${latestApkName}"
+            latestDir.mkdirs()
+            
+            // 删除该构建类型的旧latest文件
+            def oldLatest = file("${latestDir}/Echo_${buildType}_latest.apk")
+            if (oldLatest.exists()) {
+                oldLatest.delete()
+                println "🗑️  Deleted old: ${oldLatest.name}"
+            }
+        }
+        
+        doLast {
+            println "✅ Latest updated: ${latestDir}/${latestApkName}"
+        }
+    }
+    
+    // 在assemble任务后自动执行归档和更新latest
+    variant.assembleProvider.get().finalizedBy(archiveTask)
+    variant.assembleProvider.get().finalizedBy(updateLatestTask)
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-service:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    implementation 'com.google.oboe:oboe:1.8.1'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}

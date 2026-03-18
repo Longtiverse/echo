@@ -1,0 +1,65 @@
+<resources>
+    <string name="app_name">Echo</string>
+    
+    <!-- 通知 -->
+    <string name="channel_name">音频监听服务</string>
+    <string name="channel_description">实时环境音监听服务通知</string>
+    <string name="notification_title">正在监听环境音</string>
+    <string name="notification_content">点击打开应用或停止监听</string>
+    <string name="action_stop">停止</string>
+    
+    <!-- 主界面 -->
+    <string name="subtitle">实时环境音监听</string>
+    <string name="status_stopped">状态：停止</string>
+    <string name="status_running">状态：运行中</string>
+    <string name="monitor_switch">监听开关</string>
+    <string name="volume_label">播放音量</string>
+    <string name="max_volume_label">最大音量限制</string>
+    <string name="btn_start_record">开始录制</string>
+    <string name="btn_stop_record">停止录制</string>
+    <string name="dark_mode">深色模式</string>
+    <string name="btn_view_recordings">查看录音</string>
+    <string name="volume_value_format">%d%%</string>
+    
+    <!-- 录音列表 -->
+    <string name="recordings_title">录音文件</string>
+    <string name="recordings_stats_format">共 %1$d 个文件 | 总计 %2$s</string>
+    <string name="no_recordings">暂无录音文件</string>
+    <string name="no_recordings_hint">开始监听并录制音频吧</string>
+    
+    <!-- 录音项 -->
+    <string name="duration_format">%1$02d:%2$02d</string>
+    <string name="content_desc_play">播放</string>
+    <string name="content_desc_more">更多选项</string>
+    
+    <!-- 菜单 -->
+    <string name="action_share">分享</string>
+    <string name="action_rename">重命名</string>
+    <string name="action_delete">删除</string>
+    
+    <!-- Toast消息 -->
+    <string name="toast_permission_granted">权限已获取</string>
+    <string name="toast_permission_required">需要录音和通知权限</string>
+    <string name="toast_start_monitoring">开始监听</string>
+    <string name="toast_stop_monitoring">停止监听</string>
+    <string name="toast_start_recording">开始录制</string>
+    <string name="toast_stop_recording">录制已保存: %s</string>
+    <string name="toast_recording_failed">录制失败</string>
+    <string name="toast_dark_mode_on">已切换到深色模式</string>
+    <string name="toast_dark_mode_off">已切换到浅色模式</string>
+    <string name="toast_deleted">已删除</string>
+    <string name="toast_delete_failed">删除失败</string>
+    <string name="toast_renamed">重命名成功</string>
+    <string name="toast_rename_failed">重命名失败</string>
+    
+    <!-- 对话框 -->
+    <string name="dialog_delete_title">删除确认</string>
+    <string name="dialog_delete_message">确定要删除 "%s" 吗？</string>
+    <string name="dialog_delete_confirm">删除</string>
+    <string name="dialog_cancel">取消</string>
+    <string name="dialog_rename_title">重命名</string>
+    <string name="dialog_rename_confirm">确定</string>
+    
+    <!-- 分享 -->
+    <string name="share_title">分享音频</string>
+</resources>
