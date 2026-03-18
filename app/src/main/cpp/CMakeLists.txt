@@ -14,15 +14,13 @@ find_package(oboe REQUIRED CONFIG)
 find_library(log-lib log)
 find_library(android-lib android)
 
-# 创建共享库 - Phase 2将实现完整功能
-# 注意：Phase 1先保留文件结构，Phase 2将重构audio_engine实现
+# 创建共享库 - Phase 2完整实现
 add_library(
     echo_audio
     SHARED
-    # Phase 2将添加:
-    # audio_engine.cpp
-    # volume_limiter.cpp
-    # jni_bridge.cpp
+    audio_engine.cpp
+    volume_limiter.cpp
+    jni_bridge.cpp
 )
 
 # 链接库

@@ -1,54 +1,72 @@
 #include "volume_limiter.h"
+#include <cstdint>
+
+namespace echo {
 
 VolumeLimiter::VolumeLimiter() {
-    setMaxDb(0.0f);  // 默认不限制
+    // 默认70% (-3.1dB)
+    setMaxLevel(0.7f);
 }
 
-void VolumeLimiter::setMaxDb(float maxDb) {
-    // 将dB转换为线性值: linear = 10^(dB/20)
-    float linear = std::pow(10.0f, maxDb / 20.0f);
-    maxLinear.store(linear);
-    threshold = linear;
+void VolumeLimiter::setMaxLevel(float linearLevel) {
+    // 限制在有效范围 [0.0, 1.0]
+    linearLevel = std::max(0.0f, std::min(1.0f, linearLevel));
+    maxLinear_.store(linearLevel);
 }
 
-float VolumeLimiter::process(float input) {
-    float maxVol = maxLinear.load();
+int16_t VolumeLimiter::process(int16_t input) {
+    // 转换为归一化浮点数 [-1.0, 1.0]
+    float normalized = input / 32768.0f;
     
-    // 应用音量限制
-    float limited = input * maxVol;
+    // 应用软限幅
+    float clipped = softClip(normalized);
     
-    // 软限幅处理，防止削波
-    return softClip(limited);
+    // 转换回 int16_t
+    int32_t output = static_cast<int32_t>(clipped * 32768.0f);
+    
+    // 防止溢出
+    return static_cast<int16_t>(std::max(-32768, std::min(32767, output)));
 }
 
-void VolumeLimiter::process(float* data, int numFrames) {
-    for (int i = 0; i < numFrames; ++i) {
+void VolumeLimiter::process(int16_t* data, int numFrames) {
+    for (int i = 0; i < numFrames; i++) {
         data[i] = process(data[i]);
     }
 }
 
-float VolumeLimiter::softClip(float sample) {
-    // 软限幅算法
-    // 当信号超过阈值时，使用平滑曲线限幅
+float VolumeLimiter::softClip(float normalizedSample) {
+    float maxLevel = maxLinear_.load();
     
-    const float thresholdLevel = threshold * 0.8f;  // 开始压缩的阈值
+    // 缩放到目标电平
+    float scaled = normalizedSample * maxLevel;
     
-    if (std::abs(sample) < thresholdLevel) {
-        // 在阈值范围内，线性通过
-        return sample;
-    } else if (std::abs(sample) < threshold) {
-        // 在压缩区，使用平滑过渡
-        float sign = (sample > 0) ? 1.0f : -1.0f;
-        float absSample = std::abs(sample);
-        float normalized = (absSample - thresholdLevel) / (threshold - thresholdLevel);
-        
-        // 使用平滑的S曲线压缩
-        float compressed = thresholdLevel + (threshold - thresholdLevel) * 
-            (normalized * (2.0f - normalized));
-        
-        return sign * compressed;
-    } else {
-        // 硬限幅
-        return (sample > 0) ? threshold : -threshold;
+    // 软限幅阈值: 开始压缩的点 (目标电平的80%)
+    const float threshold = maxLevel * 0.8f;
+    
+    float absSample = std::abs(scaled);
+    
+    if (absSample <= threshold) {
+        // 线性区域: 直接通过
+        return scaled;
     }
+    
+    // 压缩区域
+    float sign = (scaled > 0.0f) ? 1.0f : -1.0f;
+    
+    // 归一化到 [0, 1] 的压缩区
+    float t = (absSample - threshold) / (maxLevel - threshold);
+    t = std::max(0.0f, std::min(1.0f, t));  // 限制范围
+    
+    // 应用平滑曲线
+    float compressed = threshold + (maxLevel - threshold) * smoothCurve(t);
+    
+    return sign * compressed;
 }
+
+float VolumeLimiter::smoothCurve(float t) {
+    // 3t² - 2t³ 平滑多项式
+    // 特性: f(0)=0, f(1)=1, f'(0)=0, f'(1)=0
+    return t * t * (3.0f - 2.0f * t);
+}
+
+} // namespace echo

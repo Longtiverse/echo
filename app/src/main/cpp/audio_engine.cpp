@@ -1,37 +1,103 @@
 #include "audio_engine.h"
 #include <android/log.h>
-#include <string>
+#include <cstring>
 
-#define LOG_TAG "AudioEngine_CPP"
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, "EchoAudio", __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "EchoAudio", __VA_ARGS__)
+
+namespace echo {
 
 AudioEngine::AudioEngine() {
-    LOGD("AudioEngine constructor");
-    // 初始化环形缓冲区
-    std::memset(circularBuffer, 0, sizeof(circularBuffer));
+    // 初始化环形缓冲区为0
+    ringBuffer_.fill(0);
+    LOGD("AudioEngine created");
 }
 
 AudioEngine::~AudioEngine() {
-    LOGD("AudioEngine destructor");
     release();
+    LOGD("AudioEngine destroyed");
 }
 
 bool AudioEngine::initialize() {
-    LOGD("Initializing AudioEngine...");
-    
-    if (!setupInputStream()) {
-        LOGE("Failed to setup input stream");
-        return false;
+    if (isInitialized_.load()) {
+        LOGD("Already initialized");
+        return true;
     }
-    
+
+    LOGD("Initializing AudioEngine...");
+    LOGD("SampleRate: %d, Channels: %d, Format: I16", kSampleRate, kChannelCount);
+
+    // 初始化音量限制器 (默认70% = -3.1dB)
+    volumeLimiter_.setMaxLevel(0.7f);
+    volume_.store(0.7f);
+
+    isInitialized_.store(true);
+    LOGD("AudioEngine initialized successfully");
+    return true;
+}
+
+bool AudioEngine::start() {
+    if (isRunning_.load()) {
+        LOGD("Already running");
+        return true;
+    }
+
+    if (!isInitialized_.load()) {
+        if (!initialize()) {
+            LOGE("Failed to initialize");
+            return false;
+        }
+    }
+
+    LOGD("Starting audio engine...");
+
+    // 重置缓冲区
+    writeIndex_.store(0);
+    readIndex_.store(0);
+    ringBuffer_.fill(0);
+
+    // 先启动输出流 (播放), 这样输入有数据时立即可以播放
     if (!setupOutputStream()) {
         LOGE("Failed to setup output stream");
         return false;
     }
-    
-    LOGD("AudioEngine initialized successfully");
+
+    if (!setupInputStream()) {
+        LOGE("Failed to setup input stream");
+        closeStreams();
+        return false;
+    }
+
+    isRunning_.store(true);
+    LOGD("Audio engine started successfully");
     return true;
+}
+
+void AudioEngine::stop() {
+    if (!isRunning_.load()) {
+        return;
+    }
+
+    LOGD("Stopping audio engine...");
+    isRunning_.store(false);
+    closeStreams();
+    
+    LOGD("Audio engine stopped. Stats: read=%ld, written=%ld, underruns=%d, overruns=%d",
+         framesRead_, framesWritten_, underrunCount_, overrunCount_);
+}
+
+void AudioEngine::release() {
+    stop();
+    isInitialized_.store(false);
+    LOGD("AudioEngine released");
+}
+
+void AudioEngine::setVolume(float volume) {
+    // 限制范围 0.0 - 1.0
+    volume = std::max(0.0f, std::min(1.0f, volume));
+    volume_.store(volume);
+    volumeLimiter_.setMaxLevel(volume);
+    LOGD("Volume set to %.2f", volume);
 }
 
 bool AudioEngine::setupInputStream() {
@@ -44,22 +110,28 @@ bool AudioEngine::setupInputStream() {
            ->setSampleRate(kSampleRate)
            ->setChannelCount(kChannelCount)
            ->setDataCallback(this);
-    
-    oboe::Result result = builder.openManagedStream(inputStream);
+
+    oboe::Result result = builder.openStream(inputStream_);
     if (result != oboe::Result::OK) {
         LOGE("Failed to open input stream: %s", oboe::convertToText(result));
         return false;
     }
-    
-    // 设置最小缓冲区大小
-    int32_t bufferSize = inputStream->getBufferCapacityInFrames() * kBufferSizeInBursts;
-    inputStream->setBufferSizeInFrames(bufferSize);
-    
-    LOGD("Input stream opened: SR=%d, Channels=%d, Buffer=%d",
-         inputStream->getSampleRate(),
-         inputStream->getChannelCount(),
-         inputStream->getBufferSizeInFrames());
-    
+
+    // 设置缓冲区大小为最小延迟
+    inputStream_->setBufferSizeInFrames(
+        inputStream_->getFramesPerBurst() * kBufferSizeInBursts);
+
+    result = inputStream_->requestStart();
+    if (result != oboe::Result::OK) {
+        LOGE("Failed to start input stream: %s", oboe::convertToText(result));
+        return false;
+    }
+
+    LOGD("Input stream opened: SR=%d, FPBS=%d, Buf=%d",
+         inputStream_->getSampleRate(),
+         inputStream_->getFramesPerBurst(),
+         inputStream_->getBufferSizeInFrames());
+
     return true;
 }
 
@@ -73,175 +145,143 @@ bool AudioEngine::setupOutputStream() {
            ->setSampleRate(kSampleRate)
            ->setChannelCount(kChannelCount)
            ->setDataCallback(this);
-    
-    oboe::Result result = builder.openManagedStream(outputStream);
+
+    oboe::Result result = builder.openStream(outputStream_);
     if (result != oboe::Result::OK) {
         LOGE("Failed to open output stream: %s", oboe::convertToText(result));
         return false;
     }
-    
-    // 设置最小缓冲区大小
-    int32_t bufferSize = outputStream->getBufferCapacityInFrames() * kBufferSizeInBursts;
-    outputStream->setBufferSizeInFrames(bufferSize);
-    
-    LOGD("Output stream opened: SR=%d, Channels=%d, Buffer=%d",
-         outputStream->getSampleRate(),
-         outputStream->getChannelCount(),
-         outputStream->getBufferSizeInFrames());
-    
-    return true;
-}
 
-bool AudioEngine::start() {
-    LOGD("Starting AudioEngine...");
-    
-    if (isRunning) {
-        LOGD("Already running");
-        return true;
-    }
-    
-    // 重置缓冲区索引
-    writeIndex = 0;
-    readIndex = 0;
-    
-    // 启动输入流
-    oboe::Result result = inputStream->start();
-    if (result != oboe::Result::OK) {
-        LOGE("Failed to start input stream: %s", oboe::convertToText(result));
-        return false;
-    }
-    
-    // 启动输出流
-    result = outputStream->start();
+    // 设置缓冲区大小为最小延迟
+    outputStream_->setBufferSizeInFrames(
+        outputStream_->getFramesPerBurst() * kBufferSizeInBursts);
+
+    result = outputStream_->requestStart();
     if (result != oboe::Result::OK) {
         LOGE("Failed to start output stream: %s", oboe::convertToText(result));
-        inputStream->stop();
         return false;
     }
-    
-    isRunning = true;
-    LOGD("AudioEngine started successfully");
+
+    LOGD("Output stream opened: SR=%d, FPBS=%d, Buf=%d",
+         outputStream_->getSampleRate(),
+         outputStream_->getFramesPerBurst(),
+         outputStream_->getBufferSizeInFrames());
+
     return true;
 }
 
-bool AudioEngine::stop() {
-    LOGD("Stopping AudioEngine...");
-    
-    if (!isRunning) {
-        return true;
+void AudioEngine::closeStreams() {
+    if (inputStream_) {
+        inputStream_->stop();
+        inputStream_->close();
+        inputStream_.reset();
     }
-    
-    isRunning = false;
-    
-    if (inputStream) {
-        inputStream->stop();
+    if (outputStream_) {
+        outputStream_->stop();
+        outputStream_->close();
+        outputStream_.reset();
     }
-    
-    if (outputStream) {
-        outputStream->stop();
-    }
-    
-    LOGD("AudioEngine stopped");
-    return true;
-}
-
-void AudioEngine::release() {
-    LOGD("Releasing AudioEngine...");
-    
-    stop();
-    
-    if (inputStream) {
-        inputStream->close();
-        inputStream.reset();
-    }
-    
-    if (outputStream) {
-        outputStream->close();
-        outputStream.reset();
-    }
-    
-    LOGD("AudioEngine released");
-}
-
-void AudioEngine::setVolume(float vol) {
-    volume.store(vol);
-    LOGD("Volume set to: %.3f", vol);
-}
-
-void AudioEngine::setMaxOutputLevel(float maxDb) {
-    volumeLimiter.setMaxDb(maxDb);
-    LOGD("Max output level set to: %.1f dB", maxDb);
-}
-
-double AudioEngine::getLatencyMs() const {
-    if (!outputStream) return 0.0;
-    
-    auto latencyResult = outputStream->calculateLatencyMillis();
-    if (latencyResult) {
-        return latencyResult.value();
-    }
-    return 0.0;
-}
-
-void AudioEngine::getBufferState(int* bufSize, int* capacity, int* wIdx, int* rIdx) const {
-    *bufSize = kBufferCapacity;
-    *capacity = kBufferCapacity;
-    *wIdx = writeIndex.load();
-    *rIdx = readIndex.load();
 }
 
 oboe::DataCallbackResult AudioEngine::onAudioReady(
-    oboe::AudioStream* audioStream,
+    oboe::AudioStream* stream,
     void* audioData,
     int32_t numFrames) {
     
-    int16_t* data = static_cast<int16_t*>(audioData);
-    
-    if (audioStream == inputStream.get()) {
-        // 输入流：读取麦克风数据到环形缓冲区
-        int currentWrite = writeIndex.load();
-        for (int i = 0; i < numFrames; ++i) {
-            circularBuffer[currentWrite % kBufferCapacity] = data[i];
-            currentWrite++;
+    if (stream->getDirection() == oboe::Direction::Input) {
+        // ===== 输入回调: 麦克风数据写入环形缓冲区 =====
+        // 注意: 此回调在音频线程上运行, 禁止JNI调用/锁操作
+        
+        const int16_t* inputData = static_cast<const int16_t*>(audioData);
+        size_t available = getBufferWriteAvailable();
+        
+        if (available >= static_cast<size_t>(numFrames)) {
+            // 有足够空间, 正常写入
+            writeToBuffer(inputData, numFrames);
+            framesRead_ += numFrames;
+        } else {
+            // 缓冲区满 (overrun), 跳过最旧的数据
+            overrunCount_++;
+            
+            // 覆盖写入 (丢弃旧数据)
+            size_t skipFrames = numFrames - available + kRingBufferCapacity / 4;
+            readIndex_.store((readIndex_.load() + skipFrames) % kRingBufferCapacity);
+            writeToBuffer(inputData, numFrames);
         }
-        writeIndex.store(currentWrite);
         
-    } else if (audioStream == outputStream.get()) {
-        // 输出流：从环形缓冲区读取并播放
-        int currentRead = readIndex.load();
-        int currentWrite = writeIndex.load();
-        int available = currentWrite - currentRead;
+    } else {
+        // ===== 输出回调: 从环形缓冲区读取数据到扬声器 =====
+        // 注意: 此回调在音频线程上运行, 禁止JNI调用/锁操作
         
-        for (int i = 0; i < numFrames; ++i) {
-            if (available > 0) {
-                data[i] = circularBuffer[currentRead % kBufferCapacity];
-                currentRead++;
-                available--;
-            } else {
-                // 缓冲区欠载，输出静音
-                data[i] = 0;
+        int16_t* outputData = static_cast<int16_t*>(audioData);
+        size_t available = getBufferReadAvailable();
+        
+        if (available >= static_cast<size_t>(numFrames)) {
+            // 有足够数据, 正常读取
+            readFromBuffer(outputData, numFrames);
+            
+            // 应用音量限制和软限幅
+            for (int32_t i = 0; i < numFrames; i++) {
+                outputData[i] = volumeLimiter_.process(outputData[i]);
             }
+            
+            framesWritten_ += numFrames;
+        } else {
+            // 缓冲区空 (underrun), 输出静音
+            underrunCount_++;
+            std::memset(outputData, 0, numFrames * sizeof(int16_t));
         }
-        readIndex.store(currentRead);
-        
-        // 应用音量和限幅
-        processAudio(data, data, numFrames);
     }
-    
+
     return oboe::DataCallbackResult::Continue;
 }
 
-void AudioEngine::processAudio(int16_t* inputData, int16_t* outputData, int32_t numFrames) {
-    float vol = volume.load();
+// ========== 无锁环形缓冲区操作 ==========
+
+size_t AudioEngine::getBufferWriteAvailable() const {
+    size_t writeIdx = writeIndex_.load(std::memory_order_relaxed);
+    size_t readIdx = readIndex_.load(std::memory_order_acquire);
     
-    for (int i = 0; i < numFrames; ++i) {
-        // 转换为float进行处理
-        float sample = inputData[i] * vol;
-        
-        // 应用音量限制
-        sample = volumeLimiter.process(sample);
-        
-        // 转换回int16
-        outputData[i] = static_cast<int16_t>(std::clamp(sample, -32768.0f, 32767.0f));
+    if (writeIdx >= readIdx) {
+        return kRingBufferCapacity - (writeIdx - readIdx) - 1;
+    } else {
+        return readIdx - writeIdx - 1;
     }
 }
+
+size_t AudioEngine::getBufferReadAvailable() const {
+    size_t writeIdx = writeIndex_.load(std::memory_order_acquire);
+    size_t readIdx = readIndex_.load(std::memory_order_relaxed);
+    
+    if (writeIdx >= readIdx) {
+        return writeIdx - readIdx;
+    } else {
+        return kRingBufferCapacity - (readIdx - writeIdx);
+    }
+}
+
+void AudioEngine::writeToBuffer(const int16_t* data, size_t numFrames) {
+    size_t writeIdx = writeIndex_.load(std::memory_order_relaxed);
+    
+    for (size_t i = 0; i < numFrames; i++) {
+        ringBuffer_[writeIdx] = data[i];
+        writeIdx = (writeIdx + 1) % kRingBufferCapacity;
+    }
+    
+    // 使用release语义确保数据写入在索引更新前完成
+    writeIndex_.store(writeIdx, std::memory_order_release);
+}
+
+void AudioEngine::readFromBuffer(int16_t* data, size_t numFrames) {
+    size_t readIdx = readIndex_.load(std::memory_order_relaxed);
+    
+    for (size_t i = 0; i < numFrames; i++) {
+        data[i] = ringBuffer_[readIdx];
+        readIdx = (readIdx + 1) % kRingBufferCapacity;
+    }
+    
+    // 使用release语义
+    readIndex_.store(readIdx, std::memory_order_release);
+}
+
+} // namespace echo
