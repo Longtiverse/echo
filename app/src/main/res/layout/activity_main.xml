@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Phase 1: 基础工程构建与权限管理
+  简化版主界面 - 仅包含基础控制元素
+-->
 <androidx.constraintlayout.widget.ConstraintLayout 
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -6,6 +10,7 @@
     android:layout_height="match_parent"
     android:padding="24dp">
 
+    <!-- 应用标题 -->
     <TextView
         android:id="@+id/textTitle"
         android:layout_width="wrap_content"
@@ -17,6 +22,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- 副标题 -->
     <TextView
         android:id="@+id/textSubtitle"
         android:layout_width="wrap_content"
@@ -28,135 +34,56 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/textTitle" />
 
-    <!-- 示波器显示 -->
-    <com.echo.ui.WaveformView
-        android:id="@+id/waveformView"
-        android:layout_width="0dp"
-        android:layout_height="100dp"
-        android:layout_marginTop="16dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textSubtitle" />
-
-    <!-- 频谱显示 -->
-    <com.echo.ui.SpectrumView
-        android:id="@+id/spectrumView"
-        android:layout_width="0dp"
-        android:layout_height="80dp"
-        android:layout_marginTop="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/waveformView" />
-
+    <!-- 状态显示 -->
     <TextView
         android:id="@+id/textStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="状态：停止"
-        android:textSize="14sp"
+        android:layout_marginTop="48dp"
+        android:text="状态: 等待权限"
+        android:textSize="18sp"
         android:textColor="@android:color/darker_gray"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/spectrumView" />
+        app:layout_constraintTop_toBottomOf="@id/textSubtitle" />
 
-    <Switch
-        android:id="@+id/switchMonitor"
-        android:layout_width="wrap_content"
+    <!-- 启动监听按钮 -->
+    <Button
+        android:id="@+id/btnStart"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="监听开关"
-        android:textSize="18sp"
+        android:layout_marginTop="48dp"
+        android:text="启动监听"
+        android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/textStatus" />
 
-    <TextView
-        android:id="@+id/textVolumeLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="播放音量"
-        android:textSize="16sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/switchMonitor" />
-
-    <TextView
-        android:id="@+id/textVolumeValue"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="100%"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/textVolumeLabel" />
-
-    <SeekBar
-        android:id="@+id/seekBarVolume"
+    <!-- 停止监听按钮 -->
+    <Button
+        android:id="@+id/btnStop"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textVolumeLabel" />
-
-    <TextView
-        android:id="@+id/textMaxVolumeLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="最大音量限制"
-        android:textSize="16sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/seekBarVolume" />
-
-    <TextView
-        android:id="@+id/textMaxVolumeValue"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="70%"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/textMaxVolumeLabel" />
-
-    <SeekBar
-        android:id="@+id/seekBarMaxVolume"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textMaxVolumeLabel" />
-
-    <Button
-        android:id="@+id/btnRecord"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="开始录制"
-        android:enabled="false"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/seekBarMaxVolume" />
-
-    <Switch
-        android:id="@+id/switchTheme"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="深色模式"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnRecord" />
-
-    <Button
-        android:id="@+id/btnViewRecordings"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="查看录音"
+        android:text="停止监听"
+        android:textSize="16sp"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/switchTheme" />
+        app:layout_constraintTop_toBottomOf="@id/btnStart" />
+
+    <!-- Phase 1 完成提示 -->
+    <TextView
+        android:id="@+id/textPhaseInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:text="Phase 1: 基础工程与权限管理\n等待后续Phase实现完整功能"
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray"
+        android:gravity="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
