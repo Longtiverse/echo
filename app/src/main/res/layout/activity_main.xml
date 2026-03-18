@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Phase 1: 基础工程构建与权限管理
-  简化版主界面 - 仅包含基础控制元素
+  Phase 3/4/5: 完整功能主界面
+  - 状态显示
+  - 音量控制Slider (默认70%)
+  - 启动/停止按钮
+  - 电池优化白名单引导
 -->
 <androidx.constraintlayout.widget.ConstraintLayout 
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -39,25 +42,70 @@
         android:id="@+id/textStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="32dp"
         android:text="状态: 等待权限"
-        android:textSize="18sp"
+        android:textSize="20sp"
+        android:textStyle="bold"
         android:textColor="@android:color/darker_gray"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/textSubtitle" />
+
+    <!-- 音量控制区域 -->
+    <TextView
+        android:id="@+id/textVolumeLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="播放音量"
+        android:textSize="16sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textStatus" />
+
+    <TextView
+        android:id="@+id/textVolumeValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="70%"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/textVolumeLabel" />
+
+    <SeekBar
+        android:id="@+id/seekBarVolume"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:max="100"
+        android:progress="70"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textVolumeLabel" />
+
+    <!-- 音量保护说明 -->
+    <TextView
+        android:id="@+id/textVolumeHint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="默认70% (-3.1dB) 保护听力与扬声器"
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/seekBarVolume" />
 
     <!-- 启动监听按钮 -->
     <Button
         android:id="@+id/btnStart"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="32dp"
         android:text="启动监听"
         android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textStatus" />
+        app:layout_constraintTop_toBottomOf="@id/textVolumeHint" />
 
     <!-- 停止监听按钮 -->
     <Button
@@ -72,16 +120,28 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btnStart" />
 
-    <!-- Phase 1 完成提示 -->
+    <!-- 电池优化白名单按钮 -->
+    <Button
+        android:id="@+id/btnBatteryOptimization"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="忽略电池优化 (推荐)"
+        android:textSize="14sp"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnStop" />
+
+    <!-- 版本信息 -->
     <TextView
-        android:id="@+id/textPhaseInfo"
+        android:id="@+id/textVersion"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
-        android:text="Phase 1: 基础工程与权限管理\n等待后续Phase实现完整功能"
+        android:layout_marginBottom="8dp"
+        android:text="Echo v1.0 | 低延迟音频监听"
         android:textSize="12sp"
         android:textColor="@android:color/darker_gray"
-        android:gravity="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />

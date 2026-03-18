@@ -46,14 +46,12 @@
             </intent-filter>
         </activity>
 
-        <!-- ========== Phase 4: 前台服务 (待实现) ========== -->
-        <!-- 
+        <!-- ========== Phase 4: 前台服务 ========== -->
         <service
             android:name=".service.AudioMonitoringService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
-        -->
 
         <!-- FileProvider for sharing files -->
         <provider
