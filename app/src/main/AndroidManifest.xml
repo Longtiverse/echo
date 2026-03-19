@@ -2,25 +2,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- ========== Phase 1: 基础权限配置 ========== -->
-    
-    <!-- 音频录制权限 -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    
-    <!-- 前台服务权限 (Android 14+ 需要 FOREGROUND_SERVICE_MEDIA_PLAYBACK) -->
+
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    
-    <!-- 通知权限 (Android 13+) -->
+
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    
-    <!-- 电池优化白名单权限 -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    
-    <!-- 存储权限 (仅用于旧版本兼容) -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
     <application
@@ -35,7 +29,6 @@
         android:theme="@style/Theme.Echo"
         tools:targetApi="34">
 
-        <!-- ========== Phase 1: 主Activity ========== -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -46,14 +39,12 @@
             </intent-filter>
         </activity>
 
-        <!-- ========== Phase 4: 前台服务 ========== -->
         <service
             android:name=".service.AudioMonitoringService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="mediaPlayback" />
+            android:foregroundServiceType="microphone|mediaPlayback" />
 
-        <!-- FileProvider for sharing files -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

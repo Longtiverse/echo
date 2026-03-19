@@ -2,4 +2,6 @@
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- 修复P0: 使用外部文件目录路径，兼容Android 10+ Scoped Storage -->
     <external-files-path name="recordings" path="recordings/" />
+    <cache-path name="cache" path="." />
+    <files-path name="files" path="." />
 </paths>

@@ -1,159 +1,80 @@
-# Echo - 低延迟音频监听应用
+# Echo - 实时环境音监听应用
 
-一个Android实时环境音监听应用，支持最小化延迟播放、音量限制和后台保活。
+一个 Android 实时环境音监听应用，目标是 **稳定收音并即时播放**，同时提供音量限制、后台运行、自动恢复与真机兼容回退能力。
 
-## 功能特性
+## 当前实现
 
-- ✅ **实时收音播放**: 麦克风输入即时播放，延迟 < 20ms
-- ✅ **音量限制**: 可设置最大播放音量，保护听力
-- ✅ **后台保活**: 前台服务，支持长时间后台运行
-- ✅ **系统级覆盖**: 在其他应用之上播放
-- ✅ **低延迟优化**: 使用Oboe音频库，AAudio低延迟路径
+当前默认链路已调整为：
 
-## 技术架构
+- `AudioRecord + AudioTrack` 实时回环
+- 运行时自动尝试不同采样率与音源模式
+- 前台服务负责保活、状态同步、日志广播与自动恢复
 
-### 核心组件
+原有 `cpp/` / Oboe 代码仍保留，后续可继续做机型专项优化。
 
-```
-MainActivity (UI层)
-    ↓
-AudioMonitoringService (前台服务)
-    ↓
-AudioEngine (Kotlin-C++桥接)
-    ↓
-Oboe Audio Engine (C++)
-    ↓
-麦克风 → 环形缓冲区 → 扬声器
-```
+## 已完成的关键能力
 
-### 技术栈
+- 实时收音播放
+- 音量限制与软限幅
+- 前台服务后台运行
+- WakeLock 保活
+- 音频焦点处理
+- 耳机断开自动停止
+- 启动失败可见，不再“假成功”
+- 异常后自动恢复（最多 3 次）
+- 音源模式切换
+- 输出路由模式切换
+- 运行日志面板
 
-- **开发语言**: Kotlin + C++ (NDK)
-- **音频库**: Oboe 1.8.1
-- **最低API**: Android 8.0 (API 26)
-- **架构**: MVVM + Service
+## 主界面新增设置
 
-## 开发阶段
+- **输入音源模式**
+  - 自动选择
+  - 语音识别
+  - 标准麦克风
+  - 摄像机麦克风
+  - 系统默认
 
-### Phase 1: 基础架构与权限 ✅
-- Android项目初始化
-- 权限管理系统 (RECORD_AUDIO, FOREGROUND_SERVICE)
-- 前台服务框架
-- 权限管理器 PermissionManager
+- **输出路由模式**
+  - 系统默认
+  - 扬声器优先
+  - 听筒优先
 
-### Phase 2: 低延迟音频实现 ✅
-- Oboe音频库集成
-- 音频引擎C++实现
-- 环形缓冲区管理
-- 目标延迟: < 20ms
+- **异常时自动恢复**
+  - 默认开启
+  - 最多自动重试 3 次
 
-### Phase 3: 音量控制系统 ✅
-- VolumeController 音量管理
-- 软限幅算法 (Soft Clipping)
-- 最大音量限制 (dB转线性)
-- 防止音频削波
+## 主要实现文件
 
-### Phase 4: 后台保活机制 ✅
-- 前台服务通知 (不可滑动删除)
-- WakeLock防止CPU休眠
-- 电池优化白名单引导
-- 开机自启动支持
+- `D:/Project/Echo/app/src/main/java/com/echo/app/MainActivity.kt`
+- `D:/Project/Echo/app/src/main/java/com/echo/app/service/AudioMonitoringService.kt`
+- `D:/Project/Echo/app/src/main/java/com/echo/app/audio/OboeAudioEngine.kt`
+- `D:/Project/Echo/app/src/main/java/com/echo/app/audio/AudioRouteMode.kt`
+- `D:/Project/Echo/app/src/main/res/layout/activity_main.xml`
+- `D:/Project/Echo/app/src/main/res/values/strings.xml`
 
-### Phase 5: 系统级音频覆盖 ✅
-- 音频焦点管理 (AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
-- USAGE_ASSISTANCE_SONIFICATION
-- 音频路由策略 (扬声器/耳机/蓝牙)
-- 强制可听配置
+## 构建
 
-## 项目结构
-
-```
-Echo/
-├── app/
-│   ├── src/main/
-│   │   ├── java/com/echo/
-│   │   │   ├── MainActivity.kt
-│   │   │   ├── EchoApplication.kt
-│   │   │   ├── service/
-│   │   │   │   ├── AudioMonitoringService.kt
-│   │   │   │   └── BootReceiver.kt
-│   │   │   ├── audio/
-│   │   │   │   ├── AudioEngine.kt
-│   │   │   │   └── VolumeController.kt
-│   │   │   └── permission/
-│   │   │       └── PermissionManager.kt
-│   │   ├── cpp/
-│   │   │   ├── CMakeLists.txt
-│   │   │   ├── audio_engine.h/.cpp
-│   │   │   ├── volume_limiter.h/.cpp
-│   │   │   └── jni_bridge.cpp
-│   │   └── res/
-│   └── build.gradle
-├── build.gradle
-├── settings.gradle
-└── README.md
-```
-
-## 构建说明
-
-### 环境要求
-
-- Android Studio Hedgehog (2023.1.1) 或更高
-- NDK 25.1.8937393
-- CMake 3.22.1
-- JDK 17
-
-### 构建步骤
-
-1. 克隆项目
-```bash
-git clone <repository-url>
-cd Echo
-```
-
-2. 在Android Studio中打开项目
-
-3. 同步Gradle并构建
 ```bash
 ./gradlew assembleDebug
 ```
 
-4. 安装到设备
-```bash
-./gradlew installDebug
-```
+## 最新验证
 
-## 权限说明
+已通过：
 
-应用需要以下权限：
+- `assembleDebug`
+- `lintDebug`
+- `testDebugUnitTest`
 
-| 权限 | 用途 | 申请方式 |
-|------|------|----------|
-| `RECORD_AUDIO` | 麦克风录制 | 运行时 |
-| `FOREGROUND_SERVICE` | 前台服务 | 安装时 |
-| `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Android 14+ 服务类型 | 安装时 |
-| `WAKE_LOCK` | 防止CPU休眠 | 安装时 |
-| `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | 忽略电池优化 | 引导用户 |
+最新 APK：
 
-## 性能指标
-
-- **目标延迟**: < 20ms
-- **采样率**: 48000Hz
-- **缓冲区**: 最小化 (2 bursts)
-- **音频格式**: I16 (16位整数)
+- `D:/Project/Echo/app/build/outputs/apk/latest/Echo_Debug_latest.apk`
 
 ## 注意事项
 
-1. **音量安全**: 默认最大音量限制为70% (-3dB)
-2. **耳机检测**: 插入耳机时自动暂停，防止听力损伤
-3. **电池优化**: 建议将应用加入电池优化白名单
-4. **后台限制**: Android 12+ 对后台服务有限制，已适配
-
-## 许可证
-
-MIT License
-
-## 致谢
-
-- [Oboe](https://github.com/google/oboe) - Google低延迟音频库
-- Android Open Source Project
+1. 外放监听天然存在啸叫风险，建议先从 30% - 50% 音量开始测试。
+2. 如果某个机型收音或播放异常，可优先切换：
+   - 输入音源模式
+   - 输出路由模式
+3. 若系统后台限制严格，建议手动加入电池优化白名单。

@@ -1,65 +1,119 @@
 <resources>
     <string name="app_name">Echo</string>
-    
+
     <!-- 通知 -->
     <string name="channel_name">音频监听服务</string>
-    <string name="channel_description">实时环境音监听服务通知</string>
-    <string name="notification_title">正在监听环境音</string>
-    <string name="notification_content">点击打开应用或停止监听</string>
-    <string name="action_stop">停止</string>
-    
+    <string name="channel_description">实时环境音监听前台服务</string>
+    <string name="notification_title">Echo - 环境音监听</string>
+    <string name="notification_action_stop">停止监听</string>
+    <string name="notification_content_format">%1$s | %2$s | %3$s | 音量 %4$d%%</string>
+
+    <!-- 状态 -->
+    <string name="status_format">状态: %1$s</string>
+    <string name="status_preparing">准备中</string>
+    <string name="status_waiting_permission">等待权限</string>
+    <string name="status_ready">就绪</string>
+    <string name="status_starting">启动中…</string>
+    <string name="status_running">运行中</string>
+    <string name="status_stopping">停止中…</string>
+    <string name="status_stopped">已停止</string>
+    <string name="status_failed">启动失败</string>
+    <string name="status_paused">已暂停</string>
+    <string name="status_restarting">重启中</string>
+    <string name="status_auto_recovering_format">自动恢复中(%1$d/%2$d)</string>
+
     <!-- 主界面 -->
     <string name="subtitle">实时环境音监听</string>
-    <string name="status_stopped">状态：停止</string>
-    <string name="status_running">状态：运行中</string>
-    <string name="monitor_switch">监听开关</string>
+    <string name="engine_info_format">音频链路: %1$s</string>
+    <string name="engine_info_idle">待启动</string>
     <string name="volume_label">播放音量</string>
-    <string name="max_volume_label">最大音量限制</string>
-    <string name="btn_start_record">开始录制</string>
-    <string name="btn_stop_record">停止录制</string>
-    <string name="dark_mode">深色模式</string>
-    <string name="btn_view_recordings">查看录音</string>
-    <string name="volume_value_format">%d%%</string>
-    
-    <!-- 录音列表 -->
-    <string name="recordings_title">录音文件</string>
-    <string name="recordings_stats_format">共 %1$d 个文件 | 总计 %2$s</string>
-    <string name="no_recordings">暂无录音文件</string>
-    <string name="no_recordings_hint">开始监听并录制音频吧</string>
-    
-    <!-- 录音项 -->
-    <string name="duration_format">%1$02d:%2$02d</string>
-    <string name="content_desc_play">播放</string>
-    <string name="content_desc_more">更多选项</string>
-    
-    <!-- 菜单 -->
-    <string name="action_share">分享</string>
-    <string name="action_rename">重命名</string>
-    <string name="action_delete">删除</string>
-    
-    <!-- Toast消息 -->
+    <string name="volume_value_format">%1$d%%</string>
+    <string name="volume_hint">默认 70%%。如果外放啸叫，请先降到 30%% - 50%%。</string>
+    <string name="audio_source_label">输入音源模式</string>
+    <string name="audio_route_label">输出路由模式</string>
+    <string name="auto_restart_label">异常时自动恢复（最多 3 次）</string>
+    <string name="settings_hint">建议优先使用“自动选择”或“语音识别”；切换音源或路由时会自动重启音频链路。</string>
+    <string name="button_start">启动监听</string>
+    <string name="button_stop">停止监听</string>
+    <string name="button_battery_optimization">忽略电池优化（推荐）</string>
+    <string name="button_export_diagnostics">导出诊断信息</string>
+    <string name="logs_title">运行日志</string>
+    <string name="button_clear_logs">清空</string>
+    <string name="logs_empty">暂无运行日志</string>
+    <string name="version_label">Echo v1.2 | 稳定监听增强版</string>
+
+    <!-- 音源模式 -->
+    <string name="audio_source_auto">自动选择</string>
+    <string name="audio_source_voice_recognition">语音识别</string>
+    <string name="audio_source_mic">标准麦克风</string>
+    <string name="audio_source_camcorder">摄像机麦克风</string>
+    <string name="audio_source_default">系统默认</string>
+
+    <!-- 输出路由模式 -->
+    <string name="audio_route_auto">系统默认</string>
+    <string name="audio_route_speaker">扬声器优先</string>
+    <string name="audio_route_earpiece">听筒优先</string>
+
+    <!-- Toast / 用户提示 -->
+    <string name="toast_request_permissions">请先授予权限</string>
     <string name="toast_permission_granted">权限已获取</string>
-    <string name="toast_permission_required">需要录音和通知权限</string>
-    <string name="toast_start_monitoring">开始监听</string>
-    <string name="toast_stop_monitoring">停止监听</string>
-    <string name="toast_start_recording">开始录制</string>
-    <string name="toast_stop_recording">录制已保存: %s</string>
-    <string name="toast_recording_failed">录制失败</string>
-    <string name="toast_dark_mode_on">已切换到深色模式</string>
-    <string name="toast_dark_mode_off">已切换到浅色模式</string>
-    <string name="toast_deleted">已删除</string>
-    <string name="toast_delete_failed">删除失败</string>
-    <string name="toast_renamed">重命名成功</string>
-    <string name="toast_rename_failed">重命名失败</string>
-    
-    <!-- 对话框 -->
-    <string name="dialog_delete_title">删除确认</string>
-    <string name="dialog_delete_message">确定要删除 "%s" 吗？</string>
-    <string name="dialog_delete_confirm">删除</string>
-    <string name="dialog_cancel">取消</string>
-    <string name="dialog_rename_title">重命名</string>
-    <string name="dialog_rename_confirm">确定</string>
-    
-    <!-- 分享 -->
-    <string name="share_title">分享音频</string>
+    <string name="toast_missing_permissions_format">缺少权限: %1$s</string>
+    <string name="toast_whitelist_already">已在白名单中</string>
+    <string name="toast_started">开始监听并播放环境音</string>
+    <string name="toast_stopped">监听已停止</string>
+    <string name="toast_already_running">监听已在运行</string>
+    <string name="toast_start_failed_init">音频初始化失败，请重试或更换音源模式</string>
+    <string name="toast_start_failed_open">无法同时打开麦克风和扬声器，请确认未被其它应用占用</string>
+    <string name="toast_settings_applied_restart">设置已更新，已重新启动监听</string>
+    <string name="toast_auto_recovering">音频链路中断，正在自动恢复</string>
+    <string name="toast_focus_lost_stopped">音频焦点丢失，监听已停止</string>
+    <string name="toast_headset_removed_stopped">检测到耳机断开，已自动停止以防啸叫</string>
+    <string name="toast_unexpected_stop_format">监听异常停止：%1$s</string>
+    <string name="toast_diagnostics_exported">诊断信息已导出，可直接分享</string>
+    <string name="toast_diagnostics_export_failed_format">导出诊断信息失败：%1$s</string>
+    <string name="share_diagnostics_chooser">分享诊断信息</string>
+
+    <!-- 日志 -->
+    <string name="log_service_created">服务已创建</string>
+    <string name="log_service_destroyed">服务销毁</string>
+    <string name="log_monitor_started">监听已启动</string>
+    <string name="log_monitor_stopped">停止监听</string>
+    <string name="log_request_start">请求启动监听</string>
+    <string name="log_request_stop">请求停止监听</string>
+    <string name="log_permission_granted">权限已授予</string>
+    <string name="log_permission_denied_format">权限被拒绝: %1$s</string>
+    <string name="log_settings_updated_restart">设置已变更，正在重启音频链路</string>
+    <string name="log_wakelock_acquired">WakeLock 已获取</string>
+    <string name="log_wakelock_released">WakeLock 已释放</string>
+    <string name="log_wakelock_failed_format">WakeLock 获取失败: %1$s</string>
+    <string name="log_audio_focus_not_granted">音频焦点未授予，继续尝试启动</string>
+    <string name="log_audio_focus_gained">音频焦点恢复</string>
+    <string name="log_audio_focus_lost_format">音频焦点丢失: %1$d</string>
+    <string name="log_headset_removed">检测到耳机断开，自动停止</string>
+    <string name="log_unexpected_stop_format">引擎异常停止: %1$s</string>
+    <string name="log_schedule_recovery_format">计划自动恢复，第 %1$d 次</string>
+    <string name="log_execute_recovery_format">执行自动恢复，第 %1$d 次</string>
+    <string name="log_config_format">配置: 音量=%1$d%% / 音源=%2$s / 路由=%3$s / 自动恢复=%4$s</string>
+    <string name="log_route_applied_format">输出路由已应用: %1$s</string>
+    <string name="log_route_apply_failed_format">输出路由应用失败: %1$s</string>
+    <string name="log_route_device_snapshot_format">当前输出设备: %1$s</string>
+    <string name="log_route_reapplied_format">检测到音频设备变化，已重新应用路由: %1$s</string>
+    <string name="log_audio_devices_added_format">音频设备接入: %1$s</string>
+    <string name="log_audio_devices_removed_format">音频设备移除: %1$s</string>
+    <string name="log_bluetooth_high_latency_warning">检测到蓝牙音乐输出，实时监听延迟会明显升高；如需更低延迟，建议改用有线耳机、听筒或扬声器。</string>
+    <string name="log_export_success_format">诊断信息已导出: %1$s</string>
+    <string name="log_export_failed_format">导出诊断信息失败: %1$s</string>
+    <string name="log_no_effects">无增强</string>
+    <string name="log_on">开</string>
+    <string name="log_off">关</string>
+
+    <!-- 路由摘要 -->
+    <string name="route_summary_idle">未应用</string>
+    <string name="route_summary_auto_default">自动：系统默认输出</string>
+    <string name="route_summary_auto_wired">自动：有线耳机 / USB 音频</string>
+    <string name="route_summary_auto_bt_sco">自动：蓝牙通话设备</string>
+    <string name="route_summary_auto_bt_a2dp">自动：蓝牙音乐输出（高延迟）</string>
+    <string name="route_summary_speaker">扬声器优先</string>
+    <string name="route_summary_earpiece">听筒优先</string>
+    <string name="route_summary_earpiece_fallback_wired">听筒不可用，已回退到有线耳机</string>
 </resources>
